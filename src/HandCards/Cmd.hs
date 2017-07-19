@@ -1,4 +1,6 @@
 module HandCards.Cmd where
 
-runCmd :: IO ()
-runCmd = putStrLn "Command line interface"
+import qualified HandCards.Data as Hcd
+
+runCmd :: Hcd.Arguments -> IO ()
+runCmd args = putStrLn ("Processing file: " ++ Hcd._fileName args)
