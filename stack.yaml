@@ -41,6 +41,7 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - JuicyPixels-3.2.8.2
+- JuicyPixels-repa-0.7.1.0
 
 # Override default flag values for local packages and extra-deps
 flags: {}
