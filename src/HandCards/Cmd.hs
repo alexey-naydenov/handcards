@@ -16,8 +16,8 @@ runCmd args = do
     Right dimg -> do
       putStrLn $ "Read image: " ++ Hcd._fileName args
       -- (putStrLn . show . R.extent) byWidth
-      (putStrLn . show) byHeight
-        where (byWidth, byHeight) = (getHistograms . fromImage) dimg
+      (putStrLn . show) byWidth
+        where (byWidth, byHeight) = (collapseDimensions . fromImage) dimg
   
 fromImage :: Cp.DynamicImage -> R.Array R.D R.DIM2 Int
 fromImage dimg =
@@ -36,9 +36,9 @@ getPixel img (R.Z R.:. y R.:. x) =
 --   -- where (byWidth, byHeight) = getHistograms imgArray
 --   getHistograms imgArray
 
-getHistograms :: (R.Array R.D R.DIM2 Int)
-               -> ((R.Array R.U R.DIM1 Int), (R.Array R.U R.DIM1 Int))
-getHistograms array =
+collapseDimensions :: (R.Array R.D R.DIM2 Int)
+                   -> ((R.Array R.U R.DIM1 Int), (R.Array R.U R.DIM1 Int))
+collapseDimensions array =
   runIdentity $ do
   byWidth <- R.sumP array
   byHeight <- R.sumP $ R.transpose array
