@@ -16,18 +16,18 @@ runCmd args = do
     Left err -> putStrLn $ "Could not read image: " ++ err
     Right dimg -> do
       putStrLn $ "Read image: " ++ Hcd._fileName args
-      -- (putStrLn . show . R.extent) byWidth
-      -- (putStrLn . show) byWidth
-      print $ getPeakBounds (Hcd._baseQuantile args) (Hcd._peakQuantile args)
-                             byWidth
-      print $ getPeakBounds (Hcd._baseQuantile args) (Hcd._peakQuantile args)
-                             byHeight
-      print $ findPeaks (Hcd._baseQuantile args) (Hcd._peakQuantile args)
-                         byHeight
-      print $ findPeaks (Hcd._baseQuantile args) (Hcd._peakQuantile args)
-                         byWidth
+      putStrLn "Found lines vertical/horizontal:"
+      print vertical
+      print horizontal
+      splitImage (Hcd._outputPrefix args) vertical horizontal dimg
         where (byWidth, byHeight) = (collapseDimensions . fromImage) dimg
-                
+              vertical = findPeaks (Hcd._baseQuantile args)
+                                   (Hcd._peakQuantile args)
+                                   byHeight
+              horizontal = findPeaks (Hcd._baseQuantile args)
+                                     (Hcd._peakQuantile args)
+                                     byWidth
+
 fromImage :: Cp.DynamicImage -> R.Array R.D R.DIM2 Int
 fromImage dimg =
   R.fromFunction (R.Z R.:. h R.:. w) (getPixel img)
@@ -68,9 +68,7 @@ accumulatePeaks baseValue peakValue
                                        _aboveBaseFirst = newBegin, _peaks = peaks}
   where newBegin = if value < baseValue
                    then Nothing
-                   else case begin of
-                     Nothing -> Just index
-                     _ -> begin
+                   else Just $ fromMaybe index begin
 accumulatePeaks baseValue _
                 PeakAcc {_isInPeak = True, _aboveBaseFirst = Just begin,
                          _peaks = peaks}
@@ -85,11 +83,10 @@ accumulatePeaks baseValue _
                    else peaks
 accumulatePeaks _ _ _ _ _ = undefined
 
-
 findPeaks :: (V.Unbox a, Ord a) =>
   Double -> Double -> (V.Vector a) -> [(Int, Int)]
 findPeaks baseQuantile peakQuantile vector =
-  _peaks peaksAcc
+  reverse $ _peaks peaksAcc
   where
   (baseValue, peakValue) =
     fromMaybe (error "cannot calculate boundary values") $
@@ -98,3 +95,29 @@ findPeaks baseQuantile peakQuantile vector =
                        (PeakAcc False Nothing [])
                        vector
 
+splitImage :: String -> [(Int, Int)] -> [(Int, Int)] -> Cp.DynamicImage -> IO ()
+splitImage prefix vertical horizontal dimg =
+  do
+    -- Cp.writePng (prefix ++ ".png") img
+    mapM_ (uncurry Cp.writePng) images
+  where img = Cp.convertRGBA8 dimg
+        width = Cp.imageWidth img
+        height = Cp.imageHeight img
+        vBoundaries = cardBoundaries 0 (height - 1) horizontal
+        hBoundaries = cardBoundaries 0 (width - 1) vertical
+        makeName vi hi = prefix ++ "_" ++ (show vi) ++ "_" ++ (show hi) ++ ".png"
+        images = [(makeName vi hi, extractImage img top bottom left right)
+                 | (vi, top, bottom) <- vBoundaries,
+                   (hi, left, right) <- hBoundaries]
+
+extractImage :: (Cp.Pixel p) =>
+  Cp.Image p -> Int -> Int -> Int -> Int -> Cp.Image p
+extractImage img top bottom left right =
+  Cp.generateImage (\ x y -> Cp.pixelAt img (left + x) (top + y))
+                   (right - left) (bottom - top)
+
+cardBoundaries :: Int -> Int -> [(Int, Int)] -> [(Int, Int, Int)]
+cardBoundaries firstBoundary lastBoundary bands =
+  zip3 [1..] (firstBoundary : begins) (ends ++ [lastBoundary])
+  where
+    (ends, begins) = unzip bands
