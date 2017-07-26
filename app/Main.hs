@@ -15,11 +15,11 @@ args = runA $ proc () -> do
              <> short 'i'
              <> metavar "INPUT"
              <> help "input file name")) -< ()
-  outputPrefix <- asA (
+  outputDir <- asA (
     strOption ( long "output"
              <> short 'o'
-             <> metavar "OUTPUT"
-             <> help "prefix for output files")) -< ()
+             <> metavar "DIRECTORY"
+             <> help "output directory")) -< ()
   baseQuantile <- asA (
     option auto ( long "base"
                <> short 'b'
@@ -33,7 +33,7 @@ args = runA $ proc () -> do
                <> metavar "QUANTILE"
                <> help "quantile used to identify lines")) -< ()
   returnA -< Hcd.Arguments { Hcd._fileName = fileName,
-                             Hcd._outputPrefix = outputPrefix,
+                             Hcd._outputDir = outputDir,
                              Hcd._baseQuantile = baseQuantile,
                              Hcd._peakQuantile = peakQuantile}
         

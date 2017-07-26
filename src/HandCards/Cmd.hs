@@ -9,6 +9,10 @@ import qualified Data.Array.Repa as R
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Algorithms.Intro as A
 
+import qualified System.FilePath as P
+import qualified Data.ByteString as B
+import qualified Crypto.Hash as H
+
 runCmd :: Hcd.Arguments -> IO ()
 runCmd args = do
   eimg <- Cp.readImage $ Hcd._fileName args
@@ -19,7 +23,9 @@ runCmd args = do
       putStrLn "Found lines vertical/horizontal:"
       print vertical
       print horizontal
-      splitImage (Hcd._outputPrefix args) vertical horizontal dimg
+      hashString <- calculateHash (Hcd._fileName args)
+      splitImage (P.joinPath [(Hcd._outputDir args), hashString])
+                 vertical horizontal dimg
         where (byWidth, byHeight) = (collapseDimensions . fromImage) dimg
               vertical = findPeaks (Hcd._baseQuantile args)
                                    (Hcd._peakQuantile args)
@@ -27,6 +33,11 @@ runCmd args = do
               horizontal = findPeaks (Hcd._baseQuantile args)
                                      (Hcd._peakQuantile args)
                                      byWidth
+
+calculateHash :: String -> IO String
+calculateHash path = do
+  bs <- B.readFile path
+  return $ show (H.hash bs :: H.Digest H.SHA1)
 
 fromImage :: Cp.DynamicImage -> R.Array R.D R.DIM2 Int
 fromImage dimg =

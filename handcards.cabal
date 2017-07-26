@@ -17,6 +17,9 @@ library
   hs-source-dirs:      src
   exposed-modules:     HandCards.Cmd, HandCards.Data
   build-depends:       base >= 4.7 && < 5
+                     , bytestring
+                     , cryptohash
+                     , filepath
                      , vector
                      , vector-algorithms
                      , repa
