@@ -1,4 +1,6 @@
 module HandCards.Data where
 
 data Arguments = Arguments
-  { _fileName :: String }
+  { _fileName :: String,
+    _baseQuantile :: Double,
+    _peakQuantile :: Double }

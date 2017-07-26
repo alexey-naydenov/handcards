@@ -15,7 +15,21 @@ args = runA $ proc () -> do
              <> short 'i'
              <> metavar "INPUT"
              <> help "input file name")) -< ()
-  returnA -< Hcd.Arguments { Hcd._fileName = fileName }
+  baseQuantile <- asA (
+    option auto ( long "base"
+               <> short 'b'
+               <> value (0.3 :: Double)
+               <> metavar "QUANTILE"
+               <> help "quantile used to find line boundaries")) -< ()
+  peakQuantile <- asA (
+    option auto ( long "peak"
+               <> short 'p'
+               <> value (0.95 :: Double)
+               <> metavar "QUANTILE"
+               <> help "quantile used to identify lines")) -< ()
+  returnA -< Hcd.Arguments { Hcd._fileName = fileName,
+                             Hcd._baseQuantile = baseQuantile,
+                             Hcd._peakQuantile = peakQuantile}
         
 
 main :: IO ()
