@@ -24,7 +24,7 @@ args = runA $ proc () -> do
   peakQuantile <- asA (
     option auto ( long "peak"
                <> short 'p'
-               <> value (0.95 :: Double)
+               <> value (0.99 :: Double)
                <> metavar "QUANTILE"
                <> help "quantile used to identify lines")) -< ()
   returnA -< Hcd.Arguments { Hcd._fileName = fileName,
