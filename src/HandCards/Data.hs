@@ -1,7 +1,10 @@
-module HandCards.Data where
+module HandCards.Data (Arguments (..)) where
 
-data Arguments = Arguments
-  { _fileName :: String,
-    _outputDir :: String,
-    _baseQuantile :: Double,
-    _peakQuantile :: Double }
+data Arguments
+  = SplitArgs { inputImgFile :: String,
+                outputCardDir :: String,
+                baseQuantile :: Double,
+                peakQuantile :: Double }
+  | MakeArgs { inputCardDir :: String,
+               outputAnkiFile :: String }
+  deriving (Eq, Show)

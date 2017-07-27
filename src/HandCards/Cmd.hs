@@ -14,25 +14,27 @@ import qualified Data.ByteString as B
 import qualified Crypto.Hash as H
 
 runCmd :: Hcd.Arguments -> IO ()
-runCmd args = do
-  eimg <- Cp.readImage $ Hcd._fileName args
+runCmd args@Hcd.SplitArgs {} = do
+  eimg <- Cp.readImage $ Hcd.inputImgFile args
   case eimg of
-    Left err -> putStrLn $ "Could not read image: " ++ err
+    Left err -> putStrLn $ "Fail to read image: " ++ err
     Right dimg -> do
-      putStrLn $ "Read image: " ++ Hcd._fileName args
+      putStrLn $ "Read image: " ++ Hcd.inputImgFile args
       putStrLn "Found lines vertical/horizontal:"
       print vertical
       print horizontal
-      hashString <- calculateHash (Hcd._fileName args)
-      splitImage (P.joinPath [(Hcd._outputDir args), hashString])
+      hashString <- calculateHash (Hcd.inputImgFile args)
+      splitImage (P.joinPath [(Hcd.outputCardDir args), hashString])
                  vertical horizontal dimg
         where (byWidth, byHeight) = (collapseDimensions . fromImage) dimg
-              vertical = findPeaks (Hcd._baseQuantile args)
-                                   (Hcd._peakQuantile args)
+              vertical = findPeaks (Hcd.baseQuantile args)
+                                   (Hcd.peakQuantile args)
                                    byHeight
-              horizontal = findPeaks (Hcd._baseQuantile args)
-                                     (Hcd._peakQuantile args)
+              horizontal = findPeaks (Hcd.baseQuantile args)
+                                     (Hcd.peakQuantile args)
                                      byWidth
+runCmd args@Hcd.MakeArgs {} = do
+  print $ Hcd.outputAnkiFile args
 
 calculateHash :: String -> IO String
 calculateHash path = do

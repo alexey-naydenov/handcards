@@ -8,8 +8,8 @@ import Options.Applicative
 import Options.Applicative.Arrows
 import Data.Semigroup ((<>))
 
-args :: Parser Hcd.Arguments
-args = runA $ proc () -> do
+splitArgs :: Parser Hcd.Arguments
+splitArgs = runA $ proc () -> do
   fileName <- asA (
     strOption ( long "input"
              <> short 'i'
@@ -32,18 +32,37 @@ args = runA $ proc () -> do
                <> value (0.99 :: Double)
                <> metavar "QUANTILE"
                <> help "quantile used to identify lines")) -< ()
-  returnA -< Hcd.Arguments { Hcd._fileName = fileName,
-                             Hcd._outputDir = outputDir,
-                             Hcd._baseQuantile = baseQuantile,
-                             Hcd._peakQuantile = peakQuantile}
-        
+  returnA -< Hcd.SplitArgs { Hcd.inputImgFile = fileName,
+                             Hcd.outputCardDir = outputDir,
+                             Hcd.baseQuantile = baseQuantile,
+                             Hcd.peakQuantile = peakQuantile }
+
+makeArgs :: Parser Hcd.Arguments
+makeArgs = runA $ proc () -> do
+  inputDir <- asA (
+    strOption ( long "input"
+             <> short 'i'
+             <> metavar "DIRECTORY"
+             <> help "directory that contains split cards")) -< ()
+  outputFile <- asA (
+    strOption ( long "output"
+             <> short 'o'
+             <> metavar "FILENAME"
+             <> help "anki import file name")) -< ()
+  returnA -< Hcd.MakeArgs { Hcd.inputCardDir = inputDir,
+                            Hcd.outputAnkiFile = outputFile }
 
 main :: IO ()
 main = do
-    arguments <- execParser fullArgs
+    arguments <- execParser opts
     Hcc.runCmd arguments
   where
-    fullArgs = info (args <**> helper)
-      ( fullDesc
-     <> progDesc "Split hand drawn flashcards"
-     <> header "handcards - a program to split hand drawn flashcards" )
+    commandParser = subparser
+      ( command "split" (info (splitArgs <**> helper)
+                          (progDesc "Split hand drawn flashcards"))
+     <> command "make" (info (makeArgs <**> helper)
+                          (progDesc "Make anki file for all files in a dir"))
+      )
+    opts = info (commandParser <**> helper)
+      (progDesc "Create anki flashcards from hand drawn notes")
+
