@@ -20,6 +20,8 @@ library
                      , bytestring
                      , cryptohash
                      , filepath
+                     , directory
+                     , regex-compat
                      , vector
                      , vector-algorithms
                      , repa

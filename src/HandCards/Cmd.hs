@@ -4,14 +4,16 @@ import qualified HandCards.Data as Hcd
 
 import Data.Functor.Identity
 import Data.Maybe
+import qualified Data.List as L
 import qualified Codec.Picture as Cp
 import qualified Data.Array.Repa as R
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Algorithms.Intro as A
-
-import qualified System.FilePath as P
-import qualified Data.ByteString as B
 import qualified Crypto.Hash as H
+import qualified System.FilePath as P
+import qualified System.Directory as D
+import qualified Data.ByteString as B
+import Text.Regex
 
 runCmd :: Hcd.Arguments -> IO ()
 runCmd args@Hcd.SplitArgs {} = do
@@ -34,7 +36,29 @@ runCmd args@Hcd.SplitArgs {} = do
                                      (Hcd.peakQuantile args)
                                      byWidth
 runCmd args@Hcd.MakeArgs {} = do
-  print $ Hcd.outputAnkiFile args
+  allFiles <- D.listDirectory $ Hcd.inputCardDir args
+  writeFile (Hcd.outputAnkiFile args) ""
+  mapM_ (appendFile $ Hcd.outputAnkiFile args)
+        (fmap formAnkiLine $ getCardPairs allFiles)
+
+getCardPairs :: [String] -> [(String, String)]
+getCardPairs paths =
+  if (even . length) cards
+  then splitInPairs cards
+  else error "odd number of card files, something is wrong"
+  where cards = L.sort [p | p <- paths, isCardFile p]
+
+splitInPairs :: [a] -> [(a, a)]
+splitInPairs [] = []
+splitInPairs [x] = []
+splitInPairs (x1:x2:xs) = (x1, x2) : splitInPairs xs
+
+isCardFile path = isJust $ matchRegex ex path
+  where ex = mkRegex(".*_[1,2]\\.(png)|(jpg)|(jpeg)$") :: Regex
+
+formAnkiLine :: (String, String) -> String
+formAnkiLine (front, back) =
+  "<img src=\"" ++ front ++ "\">; <img src=\"" ++ back ++ "\">\n"
 
 calculateHash :: String -> IO String
 calculateHash path = do
