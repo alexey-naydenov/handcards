@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     HandCards.Cmd, HandCards.Data
+  exposed-modules:     HandCards.Cmd, HandCards.Utils, HandCards.Data
   build-depends:       base >= 4.7 && < 5
                      , bytestring
                      , cryptohash
