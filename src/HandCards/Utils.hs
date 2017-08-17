@@ -53,6 +53,15 @@ collapseDimensions array =
   byHeight <- R.sumP $ R.transpose array
   return (R.toUnboxed byWidth, R.toUnboxed byHeight)
 
+-- hasHorizontalLine :: (R.Array R.D R.DIM2 Int) -> (Int, Int) -> Bool
+hasLine array (minColumn, maxColumn) =
+  runIdentity $ do
+  rowHistogram <- R.foldP
+  return False
+  where isInBand column =  column >= minColumn && column < maxColumn
+        
+    
+
 getPeakBounds :: (V.Unbox a, Ord a) =>
   Double -> Double -> V.Vector a -> Maybe (a, a)
 getPeakBounds baseQuantile peakQuantile vector =
