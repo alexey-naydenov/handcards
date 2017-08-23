@@ -29,7 +29,7 @@ splitArgs = runA $ proc () -> do
   peakQuantile <- asA (
     option auto ( long "peak"
                <> short 'p'
-               <> value (0.99 :: Double)
+               <> value (0.95 :: Double)
                <> metavar "QUANTILE"
                <> help "quantile used to identify lines")) -< ()
   returnA -< Hcd.SplitArgs { Hcd.inputImgFile = fileName,

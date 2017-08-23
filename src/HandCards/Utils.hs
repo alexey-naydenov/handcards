@@ -53,30 +53,19 @@ collapseDimensions array =
   byHeight <- R.sumP $ R.transpose array
   return (R.toUnboxed byWidth, R.toUnboxed byHeight)
 
-getIntAverage :: (R.Shape sh) => R.Array R.U sh Int -> Int
-getIntAverage arr = R.sumAllS arr `div` (R.size (R.extent arr))
-
-hasLine :: (R.Array R.D R.DIM2 Int) -> (Int, Int) -> Bool
+hasLine :: (R.Array R.D R.DIM2 Int) -> (Int, Int) -> Maybe Bool
 hasLine array (minColumn, maxColumn) =
   runIdentity $ do
-  h <- R.computeP histogram :: Identity (R.Array R.U R.DIM1 Int)
-  average <- return $ R.sumAllS h `div` getSize h
-  inBand <- return $ countInBand h (band average)
-  return $ inBand + (div inBand 10) > getSize h
-  where getColumnShape (R.Z R.:. rowCount R.:. _) = R.Z R.:. rowCount
-        sumAlongRow get (R.Z R.:. row) = sum [get (R.Z R.:. row R.:. column)
-                                             | column <- [minColumn..maxColumn]]
-        histogram = R.traverse array getColumnShape sumAlongRow
-        getSize h = (R.size . R.extent) h
-        band a = (a - (div a 10), a + (div a 10))
-        countInBand h (minV, maxV) =
-          R.foldAllS (\ acc v ->
-                        if minV <= v && v < maxV then acc + 1 else acc ) 0 h
+  return $ R.index centers (R.Z R.:. 0)
+  where centers = R.traverse array removeOuterDimension getCenter
+        removeOuterDimension (sh R.:. _) = sh
+        getCenter get row = Just False
 
 hasVerticalLine = hasLine
 
-hasHorizontalLine :: (R.Array R.D R.DIM2 Int) -> (Int, Int) -> Bool
+hasHorizontalLine :: (R.Array R.D R.DIM2 Int) -> (Int, Int) -> Maybe Bool
 hasHorizontalLine arr range = hasLine (R.transpose arr) range
+
 
 getPeakBounds :: (V.Unbox a, Ord a) =>
   Double -> Double -> V.Vector a -> Maybe (a, a)
