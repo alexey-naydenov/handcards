@@ -15,10 +15,10 @@ runCmd args@Hcd.SplitArgs {} = do
     Right dimg -> do
       putStrLn $ "Splitting image: " ++ Hcd.inputImgFile args
       hashString <- calculateHash (Hcd.inputImgFile args)
-      -- splitImage (P.joinPath [(Hcd.outputCardDir args), hashString])
-      --            verticalLines horizontalLines dimg
-      print horizontal
-      print  [hasHorizontalLine array2d h | h <- horizontal]
+      splitImage (P.joinPath [(Hcd.outputCardDir args), hashString])
+                 verticalLines horizontalLines dimg
+      -- print horizontal
+      -- print  [hasHorizontalLine array2d h | h <- horizontal]
       -- print horizontalLines
         where
           array2d = fromImage dimg
@@ -29,8 +29,8 @@ runCmd args@Hcd.SplitArgs {} = do
           horizontal = findPeaks (Hcd.baseQuantile args)
                        (Hcd.peakQuantile args)
                        byWidth
-          -- verticalLines = [v | v <- vertical, hasVerticalLine array2d v ]
-          -- horizontalLines = [h | h <- horizontal, hasHorizontalLine array2d h]
+          verticalLines = [v | v <- vertical, hasVerticalLine array2d v ]
+          horizontalLines = [h | h <- horizontal, hasHorizontalLine array2d h]
 
 runCmd args@Hcd.MakeArgs {} = do
   allFiles <- D.listDirectory $ Hcd.inputCardDir args

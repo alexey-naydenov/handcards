@@ -23,7 +23,7 @@ splitArgs = runA $ proc () -> do
   baseQuantile <- asA (
     option auto ( long "base"
                <> short 'b'
-               <> value (0.3 :: Double)
+               <> value (0.4 :: Double)
                <> metavar "QUANTILE"
                <> help "quantile used to find line boundaries")) -< ()
   peakQuantile <- asA (

@@ -53,19 +53,37 @@ collapseDimensions array =
   byHeight <- R.sumP $ R.transpose array
   return (R.toUnboxed byWidth, R.toUnboxed byHeight)
 
-hasLine :: (R.Array R.D R.DIM2 Int) -> (Int, Int) -> Maybe Bool
+hasLine :: (R.Array R.D R.DIM2 Int) -> (Int, Int) -> Bool
 hasLine array (minColumn, maxColumn) =
   runIdentity $ do
-  return $ R.index centers (R.Z R.:. 0)
-  where centers = R.traverse array removeOuterDimension getCenter
+  return $ trueCount + (div trueCount 10) > V.length isSegmentVector
+  where trueCount = countTrue isSegmentVector
+        isSegmentVector = R.toUnboxed $ R.computeS isSegment
+        isSegment = R.traverse centers removeTwo checkIfSegment
+        centers = R.traverse array removeOuterDimension getCenter
         removeOuterDimension (sh R.:. _) = sh
-        getCenter get row = Just False
+        getCenter get row = Just $ sumProducts get row / sumValues get row
+        sumValues get row =
+          fromIntegral $ sum [ get (row R.:. c) | c <- [minColumn..maxColumn]]
+        sumProducts get row =
+          fromIntegral $ sum [ get (row R.:. c) * c | c <- [minColumn..maxColumn]]
+        removeTwo (R.Z R.:. rowCount) = (R.Z R.:. (rowCount - 2))
+        checkIfSegment get (R.Z R.:. row) =
+          isLineSegment 5 (get (R.Z R.:. row)) (get (R.Z R.:. (row + 1))) (get (R.Z R.:. (row + 2)))
 
 hasVerticalLine = hasLine
 
-hasHorizontalLine :: (R.Array R.D R.DIM2 Int) -> (Int, Int) -> Maybe Bool
+hasHorizontalLine :: (R.Array R.D R.DIM2 Int) -> (Int, Int) -> Bool
 hasHorizontalLine arr range = hasLine (R.transpose arr) range
 
+countTrue :: V.Vector Bool -> Int
+countTrue v = V.foldl' (\ acc b -> if b then acc + 1 else acc) 0 v
+
+isLineSegment :: Int -> Maybe Double -> Maybe Double -> Maybe Double -> Bool
+isLineSegment maxJump (Just prev) (Just curr) (Just next) =
+  abs (curr - prev) < fromIntegral maxJump
+  && abs (curr - next) < fromIntegral maxJump
+isLineSegment _ _ _ _ = False
 
 getPeakBounds :: (V.Unbox a, Ord a) =>
   Double -> Double -> V.Vector a -> Maybe (a, a)
